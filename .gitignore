@@ -1,4 +1,18 @@
+# macOS
 .DS_Store
+
+# IntelliJ IDEA
 .idea/
+*.iml
+
+# Maven
 target/
-.gradle/
+
+# Logs
+*.log
+
+# Build output
+out/
+
+# OS files
+Thumbs.db
