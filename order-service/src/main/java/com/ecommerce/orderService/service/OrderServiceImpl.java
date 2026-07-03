@@ -1,6 +1,8 @@
 package com.ecommerce.orderService.service.impl;
 
+import com.ecommerce.orderService.client.NotificationClient;
 import com.ecommerce.orderService.client.ProductClient;
+import com.ecommerce.orderService.dto.NotificationRequest;
 import com.ecommerce.orderService.dto.OrderRequest;
 import com.ecommerce.orderService.dto.OrderResponse;
 import com.ecommerce.orderService.dto.ProductResponse;
@@ -26,6 +28,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final ProductClient productClient;
+    private final NotificationClient notificationClient;
 
     @Override
     @CircuitBreaker(name = "productService", fallbackMethod = "createOrderFallback")
@@ -46,6 +49,12 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalPrice(totalPrice);
 
         Order savedOrder = orderRepository.save(order);
+
+        notificationClient.sendNotification(
+                NotificationRequest.builder()
+                        .orderId(savedOrder.getId())
+                        .message("Your order has been placed successfully.")
+                        .build());
 
         log.info("Order created successfully with id={}", savedOrder.getId());
 
