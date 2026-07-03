@@ -1,193 +1,351 @@
-E-Commerce Order Management System
-Overview
-This project is a microservices-based e-commerce backend developed using Spring Boot.
-The system demonstrates how independent services communicate with each other while remaining loosely coupled. It follows RESTful API principles and includes fault tolerance using Resilience4j and centralized routing using Spring Cloud Gateway.
+# E-Commerce Order Management System
 
-Architecture
-           Client 
-            │            
-            ▼
-       API Gateway
-            │ 
-┌───────────┼────────────┐
-▼           ▼            ▼
-Product Service  Order Service  Notification Service
+## Overview
 
-Services
-**Product Service**
- Responsible for
- - Creating products
- - Updating products
- - Fetching products
+This project is a **microservices-based E-Commerce Order Management System** built using **Spring Boot**. It demonstrates how independent services can collaborate while remaining loosely coupled through REST APIs and an API Gateway.
 
- Database
- - product_db
-
- Port
- - 8081
+The application follows a modular microservices architecture where each service owns its own responsibility and database. It also includes fault tolerance using **Resilience4j Circuit Breaker**, centralized request routing through **Spring Cloud Gateway**, API documentation using **Swagger/OpenAPI**, and comprehensive **unit & integration testing**.
 
 ---
-**Order Service**
- Responsible for
- - Creating orders
- - Fetching orders
- - Calling Product Service
- - Calling Notification Service
 
- Database
- - order_db
+# Architecture
 
- Port
- -8082
-
----
-**Notification Service**
- Responsible for
- - Sending order notifications
- - (Current implementation logs notification messages.)
-
- Port
- - 8083
+```
+                        Client
+                           │
+                           ▼
+                    API Gateway
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+  Product Service    Order Service   Notification Service
+```
 
 ---
-**API Gateway**
- Acts as a single entry point for all client requests.
- Port
- - 8080
 
- Configured routes
- - /products/**
- - /orders/**
- - /notifications/**
+# Microservices
+
+## Product Service
+
+**Responsibilities**
+
+- Create Product
+- Retrieve Product by is
+- Retrieve all Products
+
+**Database**
+
+- `product_db`
+
+**Port**
+
+- `8081`
 
 ---
-Technologies Used
- - Java 17
- - Spring Boot 3
- - Spring Data JPA
- - Spring Cloud Gateway
- - PostgreSQL
- - Hibernate
- - Maven
- - Lombok
- - Swagger/OpenAPI
- - JUnit 5
- - Mockito
- - MockMvc
- - Resilience4j
- - SLF4J Logging
 
----------------
-Design Decisions
+## Order Service
 
-Why Microservices?
-Microservices allow independent deployment and scalability of individual business capabilities such as Product, Order, and Notification services.
+**Responsibilities**
 
-----
-Why API Gateway?
-The API Gateway provides a single entry point for all client requests and simplifies routing to backend services.
-Benefits:
-Centralized routing
-Easier future authentication
-Simplified client communication
+- Create Order
+- Retrieve Order by id
+- Retrieve all Order
+- Validate Product by calling Product Service
+- Send notification through Notification Service
 
-----
-Why Resilience4j?
-Order Service depends on Product Service.
-If Product Service becomes unavailable, the Circuit Breaker prevents repeated failing calls and allows the system to fail gracefully.
+**Database**
 
-----
-Why PostgreSQL?
-PostgreSQL is an open-source relational database offering ACID compliance and excellent support for transactional applications.
+- `order_db`
 
-----
-Why Separate Databases?
+**Port**
+
+- `8082`
+
+---
+
+## Notification Service
+
+**Responsibilities**
+
+- Receive notification requests
+- Log notification details (simulating notification delivery)
+
+**Port**
+
+- `8083`
+
+---
+
+## API Gateway
+
+Acts as the single entry point for all client requests.
+
+**Port**
+
+- `8080`
+
+Configured Routes
+
+```
+/products/**
+/orders/**
+/notifications/**
+```
+
+---
+
+# Technology Stack
+
+- Java 17
+- Spring Boot 3
+- Spring Data JPA
+- Spring Cloud Gateway
+- PostgreSQL
+- Hibernate
+- Maven
+- Lombok
+- Swagger / OpenAPI
+- Resilience4j
+- JUnit 5
+- Mockito
+- MockMvc
+- SLF4J Logging
+
+---
+
+# Design Decisions
+
+## Why Microservices?
+
+The application is divided into independent services so that each business capability can evolve independently.
+
+**Benefits**
+
+- Better scalability
+- Independent deployment
+- Loose coupling
+- Clear separation of responsibilities
+
+---
+
+## Why API Gateway?
+
+Instead of exposing multiple services directly to clients, all requests pass through a single gateway.
+
+**Benefits**
+
+- Centralized routing
+- Simplified client communication
+- Easy future integration with authentication (OAuth2/JWT)
+- Reduced client complexity
+
+---
+
+## Why Separate Databases?
+
 Each microservice owns its own database.
-Benefits:
-Loose coupling
-Independent deployment
-Better scalability
-Database autonomy
-Assumptions
-Product IDs already exist before placing an order.
-Notification Service simulates sending notifications by logging messages.
-Services communicate using REST APIs.
 
-----
-Trade-offs
-REST instead of Messaging
-REST communication was chosen for simplicity.
-In production, asynchronous communication (Kafka/RabbitMQ) would be preferable for notifications.
-Notification Service
-Notifications are logged rather than sent via email or SMS to keep the implementation lightweight.
+**Benefits**
 
-----
-Future enhancement:
-OAuth2
-JWT
+- Service autonomy
+- Independent schema evolution
+- Loose coupling
+- Improved scalability
 
+---
 
------
-**Running the Project**
+## Why PostgreSQL?
 
-Clone Repository
-- git clone https://github.com/SonalSisodia/ecommerce-order-management.git
+PostgreSQL was selected because it is a robust relational database with excellent transactional support, ACID compliance, and strong integration with Spring Data JPA.
 
-Start PostgreSQL
-Create databases
-- product_db
-- order_db
+---
 
-Run Services 
+## Why Resilience4j?
 
-Start services in the following order:
+The Order Service depends on the Product Service.
+
+If the Product Service becomes unavailable, the Circuit Breaker prevents repeated failing requests and enables graceful failure instead of cascading failures.
+
+---
+
+# Assumptions
+
+- Products are created before orders are placed.
+- Notification Service currently simulates notifications by logging messages.
+- Services communicate synchronously using REST APIs.
+- Each service manages its own database independently.
+
+---
+
+# Trade-offs
+
+### REST Communication
+
+REST APIs were chosen for simplicity and readability.
+
+For production-scale systems, asynchronous communication using Kafka or RabbitMQ would be preferable for better scalability and decoupling.
+
+---
+
+### Notification Service
+
+The Notification Service currently logs notifications instead of sending emails or SMS.
+
+This keeps the project lightweight while demonstrating service-to-service communication.
+
+---
+
+### Authentication
+
+Authentication and authorization were intentionally kept out of the current implementation to maintain focus on the core microservices architecture.
+
+Future enhancements include:
+
+- OAuth2
+- JWT Authentication
+- Role-Based Authorization
+
+---
+
+# Project Structure
+
+```
+ecommerce-order-management
+│
+├── product-service
+├── order-service
+├── notification-service
+├── api-gateway
+│
+├── pom.xml
+└── README.md
+```
+
+---
+
+# Running the Project
+
+## Prerequisites
+
+- Java 17
+- Maven
+- PostgreSQL
+
+---
+
+## Clone Repository
+
+```bash
+git clone https://github.com/SonalSisodia/ecommerce-order-management.git
+```
+
+---
+
+## Create Databases
+
+Create the following PostgreSQL databases:
+
+```
+product_db
+order_db
+```
+
+---
+
+## Start Services
+
+Run the services in the following order:
 
 1. Product Service
 2. Notification Service
 3. Order Service
 4. API Gateway
 
+---
 
------------API Endpoints----------
-**Product Service**
-POST /products
+# API Endpoints
 
-GET /products
+## Product Service
 
-GET /products/{id}
-
-PUT /products/{id}
-----
-**Order Service**
-POST /orders
-
-GET /orders
-
-GET /orders/{id}
-
-----
-**Notification Service**
-POST /notifications
+| Method | Endpoint |
+|---------|----------|
+| POST | `/products` |
+| GET | `/products` |
+| GET | `/products/{id}` |
 
 ---
-Swagger
+
+## Order Service
+
+| Method | Endpoint |
+|---------|----------|
+| POST | `/orders` |
+| GET | `/orders` |
+| GET | `/orders/{id}` |
+
+---
+
+## Notification Service
+
+| Method | Endpoint |
+|---------|----------|
+| POST | `/notifications` |
+
+---
+
+# Swagger Documentation
+
 Product Service
+
+```
 http://localhost:8081/swagger-ui/index.html
+```
+
 Order Service
+
+```
 http://localhost:8082/swagger-ui/index.html
+```
+
 Notification Service
+
+```
 http://localhost:8083/swagger-ui/index.html
+```
 
--------
-Testing
-The project includes
-Unit Tests
-Controller Tests
-Service Tests
-Integration Tests
+---
 
-----
-Tools
-JUnit 5
-Mockito
-MockMvc
+# Testing
+
+The project contains both **Unit Tests** and **Integration Tests**.
+
+### Unit Testing
+
+- Service Layer
+- Controller Layer
+
+### Integration Testing
+
+- End-to-End API Testing using MockMvc
+- Spring Boot Integration Tests
+
+### Testing Tools
+
+- JUnit 5
+- Mockito
+- MockMvc
+
+---
+
+# Future Enhancements
+
+- OAuth2 Authentication
+- JWT Authorization
+
+---
+
+# Author
+
+**Sonal Sisodia**
+
+Backend Developer | Java | Spring Boot | Microservices
