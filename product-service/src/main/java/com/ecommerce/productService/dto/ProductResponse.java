@@ -2,6 +2,8 @@ package com.ecommerce.productService.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -11,5 +13,5 @@ public class ProductResponse {
 
     private String name;
 
-    private Double price;
+    private BigDecimal price;
 }

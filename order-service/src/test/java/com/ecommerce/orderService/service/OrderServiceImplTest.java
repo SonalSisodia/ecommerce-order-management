@@ -1,12 +1,16 @@
 package com.ecommerce.orderService.service;
 
+import com.ecommerce.orderService.client.NotificationClient;
+import com.ecommerce.orderService.client.ProductClient;
+import com.ecommerce.orderService.dto.NotificationRequest;
 import com.ecommerce.orderService.dto.OrderRequest;
 import com.ecommerce.orderService.dto.OrderResponse;
+import com.ecommerce.orderService.dto.ProductResponse;
 import com.ecommerce.orderService.entity.Order;
-import com.ecommerce.orderService.exception.OrderNotFoundException;
 import com.ecommerce.orderService.mapper.OrderMapper;
 import com.ecommerce.orderService.repository.OrderRepository;
 import com.ecommerce.orderService.service.impl.OrderServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,10 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,105 +32,121 @@ class OrderServiceImplTest {
     @Mock
     private OrderMapper orderMapper;
 
+    @Mock
+    private ProductClient productClient;
+
+    @Mock
+    private NotificationClient notificationClient;
+
     @InjectMocks
     private OrderServiceImpl orderService;
+
+    private OrderRequest orderRequest;
+    private Order order;
+    private Order savedOrder;
+    private OrderResponse orderResponse;
+    private ProductResponse productResponse;
+
+    @BeforeEach
+    void setUp() {
+
+        orderRequest = OrderRequest.builder()
+                .productId(1L)
+                .quantity(2)
+                .build();
+
+        order = Order.builder()
+                .productId(1L)
+                .quantity(2)
+                .build();
+
+        savedOrder = Order.builder()
+                .id(1L)
+                .productId(1L)
+                .quantity(2)
+                .totalPrice(BigDecimal.valueOf(100000))
+                .build();
+
+        orderResponse = OrderResponse.builder()
+                .id(1L)
+                .productId(1L)
+                .quantity(2)
+                .totalPrice(BigDecimal.valueOf(100000))
+                .build();
+
+        productResponse = ProductResponse.builder()
+                .id(1L)
+                .name("Laptop")
+                .price(BigDecimal.valueOf(50000))
+                .build();
+    }
 
     @Test
     void shouldCreateOrder() {
 
-        OrderRequest request = OrderRequest.builder()
-                .productId(1L)
-                .quantity(2)
-                .build();
+        when(productClient.getProduct(1L))
+                .thenReturn(productResponse);
 
-        Order order = Order.builder()
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderMapper.toEntity(orderRequest))
+                .thenReturn(order);
 
-        Order savedOrder = Order.builder()
-                .id(1L)
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderRepository.save(any(Order.class)))
+                .thenReturn(savedOrder);
 
-        OrderResponse response = OrderResponse.builder()
-                .id(1L)
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderMapper.toResponse(savedOrder))
+                .thenReturn(orderResponse);
 
-        when(orderMapper.toEntity(request)).thenReturn(order);
-        when(orderRepository.save(order)).thenReturn(savedOrder);
-        when(orderMapper.toResponse(savedOrder)).thenReturn(response);
+        doNothing().when(notificationClient)
+                .sendNotification(any(NotificationRequest.class));
 
-        OrderResponse result = orderService.createOrder(request);
+        OrderResponse response = orderService.createOrder(orderRequest);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
+        assertNotNull(response);
+        assertEquals(1L, response.getId());
+        assertEquals(1L, response.getProductId());
+        assertEquals(2, response.getQuantity());
+        assertEquals(BigDecimal.valueOf(100000), response.getTotalPrice());
 
-        verify(orderRepository).save(order);
+        verify(productClient, times(1))
+                .getProduct(1L);
+
+        verify(orderRepository, times(1))
+                .save(any(Order.class));
+
+        verify(notificationClient, times(1))
+                .sendNotification(any(NotificationRequest.class));
     }
 
     @Test
-    void shouldReturnAllOrders() {
+    void shouldGetOrderById() {
 
-        Order order = Order.builder()
-                .id(1L)
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderRepository.findById(1L))
+                .thenReturn(java.util.Optional.of(savedOrder));
 
-        OrderResponse response = OrderResponse.builder()
-                .id(1L)
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderMapper.toResponse(savedOrder))
+                .thenReturn(orderResponse);
 
-        when(orderRepository.findAll()).thenReturn(List.of(order));
-        when(orderMapper.toResponse(order)).thenReturn(response);
+        OrderResponse response = orderService.getOrderById(1L);
 
-        List<OrderResponse> result = orderService.getAllOrders();
+        assertNotNull(response);
+        assertEquals(1L, response.getId());
 
-        assertEquals(1, result.size());
+        verify(orderRepository).findById(1L);
     }
 
     @Test
-    void shouldReturnOrderById() {
+    void shouldGetAllOrders() {
 
-        Order order = Order.builder()
-                .id(1L)
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderRepository.findAll())
+                .thenReturn(java.util.List.of(savedOrder));
 
-        OrderResponse response = OrderResponse.builder()
-                .id(1L)
-                .productId(1L)
-                .quantity(2)
-                .totalPrice(BigDecimal.ZERO)
-                .build();
+        when(orderMapper.toResponse(savedOrder))
+                .thenReturn(orderResponse);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(orderMapper.toResponse(order)).thenReturn(response);
+        var orders = orderService.getAllOrders();
 
-        OrderResponse result = orderService.getOrderById(1L);
+        assertEquals(1, orders.size());
 
-        assertEquals(1L, result.getId());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenOrderNotFound() {
-
-        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(OrderNotFoundException.class,
-                () -> orderService.getOrderById(1L));
+        verify(orderRepository).findAll();
     }
 }

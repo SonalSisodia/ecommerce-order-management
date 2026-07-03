@@ -10,6 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -35,7 +36,7 @@ class ProductControllerTest {
                 ProductResponse.builder()
                         .id(1L)
                         .name("Laptop")
-                        .price(70000.0)
+                        .price(BigDecimal.valueOf(70000.0))
                         .build()
         );
 

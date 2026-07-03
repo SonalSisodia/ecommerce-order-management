@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,12 +32,12 @@ class ProductServiceImplTest {
 
         ProductRequest request = new ProductRequest();
         request.setName("Laptop");
-        request.setPrice(70000.0);
+        request.setPrice(BigDecimal.valueOf(70000.0));
 
         Product savedProduct = Product.builder()
                 .id(1L)
                 .name("Laptop")
-                .price(70000.0)
+                .price(BigDecimal.valueOf(70000.0))
                 .build();
 
         when(productRepository.save(any(Product.class)))
@@ -55,8 +56,8 @@ class ProductServiceImplTest {
     void shouldReturnAllProducts() {
 
         List<Product> products = List.of(
-                Product.builder().id(1L).name("Laptop").price(70000.0).build(),
-                Product.builder().id(2L).name("Mouse").price(800.0).build()
+                Product.builder().id(1L).name("Laptop").price(BigDecimal.valueOf(70000.0)).build(),
+                Product.builder().id(2L).name("Mouse").price(BigDecimal.valueOf(800.0)).build()
         );
 
         when(productRepository.findAll()).thenReturn(products);
@@ -74,7 +75,7 @@ class ProductServiceImplTest {
         Product product = Product.builder()
                 .id(1L)
                 .name("Laptop")
-                .price(70000.0)
+                .price(BigDecimal.valueOf(70000.0))
                 .build();
 
         when(productRepository.findById(1L))
